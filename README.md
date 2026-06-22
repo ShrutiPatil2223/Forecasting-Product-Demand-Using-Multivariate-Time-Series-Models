@@ -38,7 +38,7 @@ The analysis focuses on three key modelling decisions for an individual store:
 
 - **Stores:** 1,115 Rossmann drugstores in Germany
 - **Period:** January 2013 – July 2015
-- **Observations:** 1,017,209 daily records after merging ( more than 1 Million) 
+- **Observations:** 1,017,209 daily records after merging (more than 1 Million) 
 
 ---
 
