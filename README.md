@@ -14,7 +14,8 @@ The analysis focuses on three key modelling decisions for an individual store:
 * How does **training window length** affect forecast accuracy?
 * Does the **model structure remain stable** over time?
 * How does **training data length** influence performance?
-* The **framework is then extended to all stores in the network** to evaluate forecasting performance at scale.
+
+The framework is then extended to all stores in the network to evaluate forecasting performance at scale.
 
 ---
 
@@ -225,7 +226,7 @@ Variables consistently retained across models:
 
 * AutoARIMA with backward elimination is computationally expensive at scale
 * Only short-term forecasting was evaluated (14-day horizon)
-* local events, and economic indicators were not included
+* Weather, local events, and economic indicators were not included
 * Stores were modelled independently
 * Christmas and New Year periods consistently produced higher forecasting errors
 
