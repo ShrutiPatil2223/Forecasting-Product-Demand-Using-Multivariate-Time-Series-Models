@@ -1,20 +1,20 @@
 # Forecasting Product Demand Using Multivariate Time Series Models
 
-**Master's Thesis — Berliner Hochschule für Technik (BHT Berlin)**  
-**Author:** Shruti Patil 
-
+**Master's Thesis — Berliner Hochschule für Technik (BHT Berlin)**
+**Author:** Shruti Patil
 
 ---
 
 ## Overview
 
-This project investigates store-level daily sales forecasting using the **Rossmann Store Sales** dataset (Kaggle). The core model I used is **SARIMAX** (Seasonal Autoregressive Integrated Moving Average with Exogenous Variables), applied through a structured four-stage methodological framework.
+This project investigates store-level daily sales forecasting using the **Rossmann Store Sales** dataset from Kaggle. The core forecasting model is **SARIMAX** (Seasonal Autoregressive Integrated Moving Average with Exogenous Variables), combined with automated order selection and feature selection techniques.
 
 The analysis focuses on three key modelling decisions for an individual store:
-- How does **training window length** affect forecast accuracy?
-- Does the **model structure remain stable** over time?
-- How does **training data length** influence performance?
-- It then extends **the framework to all stores in the network** to observe how forecasting results vary at scale.
+
+* How does **training window length** affect forecast accuracy?
+* Does the **model structure remain stable** over time?
+* How does **training data length** influence performance?
+* The **framework is then extended to all stores in the network** to evaluate forecasting performance at scale.
 
 ---
 
@@ -29,144 +29,223 @@ The analysis focuses on three key modelling decisions for an individual store:
 
 ## Dataset
 
-**Source:** [Rossmann Store Sales — Kaggle](https://www.kaggle.com/competitions/rossmann-store-sales/data)
+**Source:** Rossmann Store Sales (Kaggle)
 
-| File | Description |
-|------|-------------|
-| `train.csv` | Daily transactional data per store (Sales, Open, Promo, etc.) |
+| File        | Description                                                                |
+| ----------- | -------------------------------------------------------------------------- |
+| `train.csv` | Daily transactional data per store (Sales, Open, Promo, etc.)              |
 | `store.csv` | Static store attributes (StoreType, Assortment, CompetitionDistance, etc.) |
 
-- **Stores:** 1,115 Rossmann drugstores in Germany
-- **Period:** January 2013 – July 2015
-- **Observations:** 1,017,209 daily records after merging (more than 1 Million) 
+### Dataset Characteristics
+
+* **Stores:** 1,115 Rossmann drugstores in Germany
+* **Period:** January 2013 – July 2015
+* **Observations:** 1,017,209 daily records
+* **Target Variable:** Daily Sales
+
+Key variables include:
+
+* Sales
+* Open
+* Promo
+* Customers
+* SchoolHoliday
+* StateHoliday
+* StoreType
+* Assortment
+* CompetitionDistance
+* Promo2
 
 ---
 
 ## Methodology — Four Stages
 
 ### Stage 1 — Training Window Selection
-- **Method:** Fixed-origin expanding window search
-- **Windows tested:** 4 to 104 weeks (101 windows, 1-week increments)
-- **Test period:** Fixed 14-day holdout
-- **Result:** Optimal training window = **81 weeks** (lowest RMSE)
+
+* Method: Fixed-origin expanding window search
+* Windows tested: 4 to 104 weeks
+* Total windows evaluated: 101
+* Test period: Fixed 14-day holdout
+* Result: Optimal training window = **81 weeks**
 
 ### Stage 2 — Model Stability Analysis
-- **Method:** Forward sliding window evaluation
-- **Training size:** Fixed at ~577 days
-- **Blocks:** 26 forward-sliding evaluation blocks
-- **Result:** Most stable model = **SARIMAX(0,0,1)(2,0,2)[7]**
+
+* Method: Forward sliding window evaluation
+* Training size: ~577 days
+* Evaluation blocks: 26
+* AutoARIMA and variable selection repeated independently for each block
+* Result: Most stable model = **SARIMAX(0,0,1)(2,0,2)[7]**
 
 ### Stage 3 — Training Data Length Analysis
-- **Method:** Backward rolling evaluation blocks
-- **Training lengths tested:** 1 to 12 months
-- **Blocks:** 26 backward evaluation blocks
-- **Result:** Optimal training length = **12 months** (lowest mean RMSE); performance plateaus after ~6 months
+
+* Method: Backward rolling evaluation blocks
+* Training lengths tested: 1–12 months
+* Evaluation blocks: 26
+* Result: Best performance achieved with **12 months** of training data
+* Performance improvements became marginal after approximately **6 months**
 
 ### Stage 4 — Network-Wide Forecasting
-- **Scope:** All stores
-- **Setup:** Fixed 81-week training window + fixed 14-day test window
-- **Model selection:** Per-store AutoARIMA + backward elimination
-- **Result:** Median RMSE = 684.62 across the network
+
+* Applied to all **1,115 stores**
+* Fixed training window: 81 weeks
+* Fixed test period: 14 days
+* AutoARIMA used for order selection
+* Backward elimination used for exogenous variable selection
+* Results compiled for network-wide analysis
 
 ---
 
 ## Model
 
-**SARIMAX(p,d,q)(P,D,Q)[m]** with m = 7 (weekly seasonality)
+### SARIMAX
+
+SARIMAX(p,d,q)(P,D,Q)[m]
+
+where:
+
+* p, d, q = non-seasonal parameters
+* P, D, Q = seasonal parameters
+* m = seasonal period
 
 ### Key Parameters
 
-| Parameter | Value |
-|-----------|-------|
-| Seasonal period (m) | 7 |
-| Non-seasonal differencing (d) | 0 |
-| Max p, q | 3 |
-| Max P, Q | 2 |
-| Order selection | AutoARIMA (AIC) |
-| Variable selection | Backward elimination (p ≤ 0.05) |
+| Parameter                     | Value                           |
+| ----------------------------- | ------------------------------- |
+| Seasonal Period (m)           | 7                               |
+| Non-Seasonal Differencing (d) | 0                               |
+| Maximum p, q                  | 3                               |
+| Maximum P, Q                  | 2                               |
+| Model Selection               | AutoARIMA (AIC)                 |
+| Variable Selection            | Backward Elimination (p ≤ 0.05) |
+| Maximum Model Fits            | 20                              |
 
-### Best Model — Store 1 (Stage 1)
-`SARIMAX(0,0,0)(2,0,0)[7]`
+---
 
-| Metric | Value |
-|--------|-------|
-| MAPE | 4.7% |
-| RMSE | 225.35 |
-| MAE | 178.85 |
-| R² | 0.983 |
-| AIC | 9770.6 |
+## Best Model — Store 1
 
-### Stable Model — Store 1 (Stage 2)
-`SARIMAX(0,0,1)(2,0,2)[7]`
+### Stage 1
+
+**SARIMAX(0,0,0)(2,0,0)[7]**
+
+| Metric | Value  |
+| ------ | ------ |
+| RMSE   | 225.35 |
+| MAE    | 178.85 |
+| MAPE   | 4.7%   |
+| R²     | 0.983  |
+| AIC    | 9770.6 |
+
+### Stage 2 (Most Stable Model)
+
+**SARIMAX(0,0,1)(2,0,2)[7]**
 
 ---
 
 ## Exogenous Variables
 
-Variables consistently retained across all models:
+Variables consistently retained across models:
 
-| Variable | Frequency (Store 1) | Frequency (All Stores) |
-|----------|--------------------|-----------------------|
-| Open | 100% | 100% |
-| Promo | 100% | 100% |
-| DOW_2 (Tuesday) | 100% | 95.2% |
-| DOW_3 (Wednesday) | 100% | 97.0% |
-| DOW_4 (Thursday) | 100% | 97.1% |
-| DOW_5 (Friday) | 100% | 90.6% |
-| DOW_6 (Saturday) | 100% | 81.9% |
-| SchoolHoliday | Sporadic | 53.8% |
+| Variable      | Frequency (Store 1) | Frequency (All Stores) |
+| ------------- | ------------------- | ---------------------- |
+| Open          | 100%                | 100%                   |
+| Promo         | 100%                | 100%                   |
+| DOW_2         | 100%                | 95.2%                  |
+| DOW_3         | 100%                | 97.0%                  |
+| DOW_4         | 100%                | 97.1%                  |
+| DOW_5         | 100%                | 90.6%                  |
+| DOW_6         | 100%                | 81.9%                  |
+| SchoolHoliday | Sporadic            | 53.8%                  |
+
+---
+
+## Results Summary
+
+### Stage 1 — Training Window Selection
+
+* Optimal training window: **81 weeks**
+* Best model: **SARIMAX(0,0,0)(2,0,0)[7]**
+* RMSE: **225.35**
+* MAPE: **4.7%**
+
+### Stage 2 — Model Stability Analysis
+
+* Most stable model: **SARIMAX(0,0,1)(2,0,2)[7]**
+* Open, Promo, and day-of-week variables remained consistently important
+* Highest forecasting errors occurred during Christmas and New Year periods
+
+### Stage 3 — Training Data Length Analysis
+
+* Evaluated training lengths from **1 to 12 months**
+* Forecast accuracy improved as additional historical data was added
+* Performance gains became marginal after approximately **6 months**
+* Best performance achieved with **12 months** of training data
+
+### Stage 4 — Network-Wide Forecasting
+
+* Forecasting pipeline applied to **1,115 stores**
+* Mean RMSE: **751.55**
+* Median RMSE: **684.62**
+* Only **47 stores (4.2%)** were identified as outliers
+* Most common model structure was used by only **15.2%** of stores
+* Results confirm the importance of **store-specific forecasting models**
+
+### Additional Resources
+
+* `Final_Presentation.pdf` — Complete visual analysis, forecasting plots, model diagnostics, and stage-wise results.
 
 ---
 
 ## Key Findings
 
-- **Weekly seasonality (m=7)** with P=2 is the dominant structural feature — present in 91.7% of all stores
-- **Open** and **Promo** are universal predictors across all stores (100%)
-- **More training data is not always better** — performance plateaus after ~6 months
-- **84.8%** of stores required a different model structure than Store 1 — confirming the need for per-store automated selection
-- **4.2% of stores (47 stores)** were RMSE outliers — 91.5% of these were "Always Closed on Sunday" stores with irregular sales dynamics
+* Weekly seasonality (**m = 7**) is the dominant forecasting pattern across stores
+* Open and Promo are universal predictors and were selected in 100% of stores
+* Forecast performance improves with additional training data but plateaus after approximately 6 months
+* 84.8% of stores required a different model structure than the most common model
+* Only 15.2% of stores shared the same SARIMAX specification
+* Store-specific forecasting is essential due to heterogeneous sales behaviour
+* Most forecasting outliers belong to stores that are always closed on Sundays
 
 ---
 
 ## Tech Stack
 
-| Tool | Purpose |
-|------|---------|
-| Python | Core language |
-| statsmodels | SARIMAX model estimation |
-| pmdarima | AutoARIMA order selection |
-| pandas / NumPy | Data manipulation |
-| scikit-learn | Forecast performance metrics |
-| Matplotlib / Seaborn | Visualisation |
+| Tool         | Purpose                     |
+| ------------ | --------------------------- |
+| Python       | Core programming language   |
+| pandas       | Data manipulation           |
+| NumPy        | Numerical computation       |
+| statsmodels  | SARIMAX estimation          |
+| pmdarima     | AutoARIMA order selection   |
+| scikit-learn | Forecast evaluation metrics |
+| Matplotlib   | Visualisation               |
 
 ---
 
-
 ## Limitations
 
-- AutoARIMA with backward elimination is computationally expensive at scale
-- Only short-term forecasting evaluated (14-day test window)
-- No external variables (weather, regional events) included
-- Stores modelled independently — inter-store relationships not considered
-- Christmas/New Year period shows consistently higher forecasting errors
+* AutoARIMA with backward elimination is computationally expensive at scale
+* Only short-term forecasting was evaluated (14-day horizon)
+* local events, and economic indicators were not included
+* Stores were modelled independently
+* Christmas and New Year periods consistently produced higher forecasting errors
 
 ---
 
 ## Future Work
 
-- Incorporate external variables (weather, local events)
-- Explore hybrid SARIMAX + ML approaches (gradient boosting, neural networks)
-- Investigate hierarchical or clustered forecasting methods
-- Extend test horizon beyond 14 days
+* Incorporate external variables such as weather and regional events
+* Explore hybrid SARIMAX + Machine Learning approaches
+* Compare against models such as XGBoost and LSTM
+* Extend forecasting horizons beyond 14 days
+* Investigate hierarchical and clustered forecasting methods
 
 ---
 
 ## Citation
 
-If you use this work, please cite:
-
-```
-Patil, S. (2026). Forecasting Product Demand Using Multivariate Time Series Models.
+```text
+Patil, S. (2026).
+Forecasting Product Demand Using Multivariate Time Series Models.
 Master's Thesis, Berliner Hochschule für Technik (BHT Berlin).
 ```
 
@@ -174,4 +253,6 @@ Master's Thesis, Berliner Hochschule für Technik (BHT Berlin).
 
 ## License
 
-This project is for academic purposes. Dataset belongs to Rossmann / Kaggle — please refer to the [original competition](https://www.kaggle.com/competitions/rossmann-store-sales) for data usage terms.
+This project is intended for academic and educational purposes.
+
+The Rossmann Store Sales dataset belongs to Rossmann and Kaggle. Please refer to the original Kaggle competition page for dataset usage terms.
