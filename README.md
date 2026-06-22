@@ -12,8 +12,7 @@ The analysis focuses on three key modelling decisions for an individual store:
 * How does **training window length** affect forecast accuracy?
 * Does the **model structure remain stable** over time?
 * How does **training data length** influence performance?
-
-The framework is then extended to all stores in the network to evaluate forecasting performance at scale.
+* The framework is then extended to all stores in the network to evaluate forecasting performance at scale.
 ---
 ## Research Questions
 
